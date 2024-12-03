@@ -3,8 +3,8 @@ from collections import defaultdict
 
 
 class Day1(BaseDay):
-    def __init__(self, test: bool):
-        super().__init__(1, test)
+    def __init__(self, hide_output: bool = False):
+        super().__init__(1, hide_output)
         left = []
         right = []
 
@@ -36,3 +36,7 @@ class Day1(BaseDay):
             similarity_score += i * seen_map[i]
 
         return str(similarity_score)
+
+
+if __name__ == "__main__":
+    Day1().run()

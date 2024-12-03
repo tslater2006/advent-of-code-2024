@@ -3,7 +3,7 @@ from base_day import BaseDay
 
 class Day2(BaseDay):
     def __init__(self):
-        super().__init__(1)
+        super().__init__(2)
 
     def part1(self) -> str:
         return "Not implemented"
