@@ -10,10 +10,12 @@ class BaseDay:
             test = True
         if test:
             with open(f"inputs/test/input{day}.txt") as f:
-                self.lines = [line.rstrip() for line in f]
+                self.data = f.read()
+                self.lines = [line.rstrip() for line in self.data.splitlines()]
         else:
             with open(f"inputs/actual/input{day}.txt") as f:
-                self.lines = [line.rstrip() for line in f]
+                self.data = f.read()
+                self.lines = [line.rstrip() for line in self.data.splitlines()]
 
     def __str__(self):
         return f"Day {self.day}"

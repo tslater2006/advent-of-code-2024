@@ -2,8 +2,8 @@ from base_day import BaseDay
 
 
 class Day2(BaseDay):
-    def __init__(self):
-        super().__init__(2)
+    def __init__(self, hide_output: bool = False):
+        super().__init__(2, hide_output)
 
     def part1(self) -> str:
         return "Not implemented"
@@ -12,4 +12,5 @@ class Day2(BaseDay):
         return "Not implemented"
 
 
-Day2().run()
+if __name__ == "__main__":
+    Day2().run()
