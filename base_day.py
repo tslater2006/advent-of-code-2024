@@ -1,8 +1,21 @@
 import sys
+from enum import Enum
+from collections import defaultdict, namedtuple
+
+Size = namedtuple("Size", ["width", "height"])
+Point = namedtuple("Point", ["x", "y"])
+
+
+class InputStyle(Enum):
+    LINES = 1
+    RAW = 2
+    CHAR_GRID = 3
 
 
 class BaseDay:
-    def __init__(self, day: int, hide_output: bool):
+    def __init__(
+        self, day: int, hide_output: bool, input_style: InputStyle = InputStyle.LINES
+    ):
         self.day = day
         self.hide_output = hide_output
         test = False
@@ -11,11 +24,20 @@ class BaseDay:
         if test:
             with open(f"inputs/test/input{day}.txt") as f:
                 self.data = f.read()
-                self.lines = [line.rstrip() for line in self.data.splitlines()]
         else:
             with open(f"inputs/actual/input{day}.txt") as f:
                 self.data = f.read()
-                self.lines = [line.rstrip() for line in self.data.splitlines()]
+
+        if input_style != InputStyle.RAW:
+            self.lines = [line.rstrip() for line in self.data.splitlines()]
+
+        if input_style == InputStyle.CHAR_GRID:
+            self.grid = defaultdict(str)
+
+            self.grid_size = Size(len(self.lines[0]), len(self.lines))
+            for y in range(len(self.lines)):
+                for x in range(len(self.lines[y])):
+                    self.grid[(x, y)] = self.lines[y][x]
 
     def __str__(self):
         return f"Day {self.day}"
