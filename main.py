@@ -7,7 +7,7 @@ from day5 import Day5
 from day6 import Day6
 
 
-iterations = 100
+iterations = 1
 average = 0.0
 
 for i in range(iterations):

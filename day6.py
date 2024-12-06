@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 from base_day import BaseDay, Direction, InputStyle, Point
 
@@ -7,24 +7,19 @@ from base_day import BaseDay, Direction, InputStyle, Point
 class Day6(BaseDay):
     def __init__(self, hide_output: bool = False):
         super().__init__(6, hide_output, input_style=InputStyle.CHAR_GRID)
-        self.column_map: Dict[int, List[int]] = defaultdict(lambda: [])
-        self.row_map: Dict[int, List[int]] = defaultdict(lambda: [])
         self.starting_point: Point = None
-
-        # 0 == UP, 1 == RIGHT, 2 == DOWN, 3 == LEFT
-        # rotate right == (val + 1) % 4
         self.starting_direction: int = 0
+        self.movement_offsets: List[Tuple[int, int]] = [
+            (0, -1),
+            (1, 0),
+            (0, 1),
+            (-1, 0),
+        ]
         for point in self.grid:
             char = self.grid[point]
-            if char == ".":
+            if char == "." or char == "#":
                 continue
 
-            loc_x = point[0]
-            loc_y = point[1]
-
-            if char == "#":
-                self.column_map[loc_x].append(loc_y)
-                self.row_map[loc_y].append(loc_x)
             if char in ["^", ">", "<", "v"]:
                 self.starting_point = point
                 match char:
@@ -37,87 +32,83 @@ class Day6(BaseDay):
                     case "<":
                         self.starting_direction = 3
 
-    def print_grid_with_visits(self, visited_points: Set[Point]):
+    def print_grid(
+        self,
+        visited_points: Optional[Set[Point]] = None,
+        blockage_point: Optional[Point] = None,
+    ):
         for y in range(self.grid_size.height):
-            row = self.row_map[y]
             for x in range(self.grid_size.width):
-                if x in row:
-                    print("#", end="")
-                    continue
                 if Point(x, y) in visited_points:
-                    print("X", end="")
+                    if Point(x, y) == blockage_point:
+                        print("O", end="")
+                    else:
+                        print("X", end="")
                     continue
                 else:
-                    print(".", end="")
+                    if Point(x, y) == blockage_point:
+                        print("O", end="")
+                    else:
+                        print(self.grid[Point(x, y)], end="")
                     continue
             print()
 
-    def part1(self) -> str:
+    def walk_map(
+        self, extra_block: Optional[Point] = None, detect_loops: bool = False
+    ) -> Tuple[int, bool]:
         visited_points: Set[Point] = set()
+        visited_direction_points: Set[Tuple[Point, int]] = set()
+
         visited_points.add(self.starting_point)
         guard_point = self.starting_point
         guard_direction = self.starting_direction
 
         while True:
-            changing_x = (guard_direction == 1) or (guard_direction == 3)
-            needs_less_than = (guard_direction == 0) or (guard_direction == 3)
-            if guard_direction == 0 or guard_direction == 2:
-                # dealing with a column
-                list_of_blocks = self.column_map[guard_point.x]
-            else:
-                list_of_blocks = self.row_map[guard_point.y]
-
-            if changing_x:
-                if needs_less_than:
-                    blocks_in_front = [x for x in list_of_blocks if x < guard_point.x]
-                else:
-                    blocks_in_front = [x for x in list_of_blocks if x > guard_point.x]
-            else:
-                if needs_less_than:
-                    blocks_in_front = [y for y in list_of_blocks if y < guard_point.y]
-                else:
-                    blocks_in_front = [y for y in list_of_blocks if y > guard_point.y]
-
-            if len(blocks_in_front) == 0:
-                # Add the points on the map until guard leaves
-                if changing_x:
-                    if needs_less_than:
-                        for x in range(guard_point.x, -1, -1):
-                            visited_points.add(Point(x, guard_point.y))
-                    else:
-                        for x in range(guard_point.x, self.grid_size.width):
-                            visited_points.add(Point(x, guard_point.y))
-                else:
-                    if needs_less_than:
-                        for y in range(guard_point.y, -1, -1):
-                            visited_points.add(Point(guard_point.x, y))
-                    else:
-                        for y in range(guard_point.y, self.grid_size.height):
-                            visited_points.add(Point(guard_point.x, y))
-                # print("leaving!")
-                # self.print_grid_with_visits(visited_points)
-                break
-            else:
-                change_step = -1 if needs_less_than else 1
-                stopping_offset = 1 if needs_less_than else -1
-                block_index = -1 if needs_less_than else 0
-                if changing_x:
-                    new_x = blocks_in_front[block_index] + stopping_offset
-                    while guard_point.x != new_x:
-                        guard_point = Point(guard_point.x + change_step, guard_point.y)
-                        visited_points.add(guard_point)
-                else:
-                    new_y = blocks_in_front[block_index] + stopping_offset
-                    while guard_point.y != new_y:
-                        guard_point = Point(guard_point.x, guard_point.y + change_step)
-                        visited_points.add(Point(guard_point.x, guard_point.y))
-
+            offset = self.movement_offsets[guard_direction]
+            new_point = Point(guard_point.x + offset[0], guard_point.y + offset[1])
+            char = self.grid[new_point]
+            if char == "#" or new_point == extra_block:
                 guard_direction = (guard_direction + 1) % 4
+            elif char != "":
+                guard_point = new_point
+                visited_points.add(new_point)
+                # self.print_grid(visited_points, extra_block)
+                # print()
+                if detect_loops:
 
-        return str(len(visited_points))
+                    if (new_point, guard_direction) in visited_direction_points:
+                        # print("Good block: ", extra_block)
+                        # self.print_grid(visited_points, extra_block)
+                        return len(visited_points), True
+
+                    visited_direction_points.add((new_point, guard_direction))
+            else:
+                return len(visited_points), False
+
+    def part1(self) -> str:
+        spots, looped = self.walk_map()
+        return str(spots)
 
     def part2(self) -> str:
-        return "Not implemented"
+        guard_point = self.starting_point
+        guard_direction = self.starting_direction
+        found_blocks: Set[Point] = set()
+        while True:
+            offset = self.movement_offsets[guard_direction]
+            new_point = Point(guard_point.x + offset[0], guard_point.y + offset[1])
+            char = self.grid[new_point]
+            if char == "#":
+                guard_direction = (guard_direction + 1) % 4
+            elif char != "":
+                if new_point not in found_blocks:
+                    _, looped = self.walk_map(extra_block=new_point, detect_loops=True)
+                    if looped:
+                        found_blocks.add(new_point)
+                guard_point = new_point
+            else:
+                break
+
+        return str(len(found_blocks))
 
 
 if __name__ == "__main__":
