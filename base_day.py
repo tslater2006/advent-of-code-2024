@@ -12,6 +12,13 @@ class InputStyle(Enum):
     CHAR_GRID = 3
 
 
+class Direction(Enum):
+    UP = 0
+    RIGHT = 1
+    DOWN = 2
+    LEFT = 3
+
+
 class BaseDay:
     def __init__(
         self, day: int, hide_output: bool, input_style: InputStyle = InputStyle.LINES
@@ -37,7 +44,7 @@ class BaseDay:
             self.grid_size = Size(len(self.lines[0]), len(self.lines))
             for y in range(len(self.lines)):
                 for x in range(len(self.lines[y])):
-                    self.grid[(x, y)] = self.lines[y][x]
+                    self.grid[Point(x, y)] = self.lines[y][x]
 
     def __str__(self):
         return f"Day {self.day}"
