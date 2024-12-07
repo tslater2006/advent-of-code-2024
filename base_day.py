@@ -1,4 +1,5 @@
 import sys
+import time
 from enum import Enum
 from collections import defaultdict, namedtuple
 
@@ -40,7 +41,6 @@ class BaseDay:
 
         if input_style == InputStyle.CHAR_GRID:
             self.grid = defaultdict(str)
-
             self.grid_size = Size(len(self.lines[0]), len(self.lines))
             for y in range(len(self.lines)):
                 for x in range(len(self.lines[y])):
@@ -58,9 +58,17 @@ class BaseDay:
     def part2(self) -> str:
         raise NotImplementedError
 
-    def run(self) -> None:
-        part1 = self.part1()
-        part2 = self.part2()
-        if not self.hide_output:
-            print(f"Day {self.day} Part 1: {part1}")
-            print(f"Day {self.day} Part 2: {part2}")
+    def run(self):
+        start_part1 = time.perf_counter()
+        part1_result = self.part1()
+        end_part1 = time.perf_counter()
+        part1_time_ms = (end_part1 - start_part1) * 1000
+
+        start_part2 = time.perf_counter()
+        part2_result = self.part2()
+        end_part2 = time.perf_counter()
+        part2_time_ms = (end_part2 - start_part2) * 1000
+
+        # Instead of printing, we return the results and timings.
+        # Return a tuple: (part1_result, part2_result, part1_time_in_ms, part2_time_in_ms)
+        return part1_result, part2_result, part1_time_ms, part2_time_ms
